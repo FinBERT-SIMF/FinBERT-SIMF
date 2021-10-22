@@ -43,6 +43,6 @@ After scraping, we statndard all scraped news based on following attributes. All
  - For some resources such as Cointelegraph, Google News API the news provider did not prepare a keywords list. Thus, I manually determine the news keywords based on occurrences of some known terms such as 'bitcoin' or 'EURUSD' and etc. 
  -  For all newsgroups, I used RSS feed link except FXStreet cryptocurrencies news, which I used direct link scraping of the corresponding [page](https://www.fxstreet.com/cryptocurrencies/news).
   
- - Sentiment analysis is done based on Pre-trained DistilBERT-based-uncased version. 
+ - Sentiment analysis is done based on Pre-trained [FinBERT](https://github.com/ProsusAI/finBERT). 
  
  
