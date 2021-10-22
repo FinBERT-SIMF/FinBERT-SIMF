@@ -1,5 +1,5 @@
 ### Mongo Engine Services
-#### The implementation of RESTFUL MarketPredict API through Flask and pymongo library.
+#### The implementation of RESTFUL FinBERT-SIMF API through Flask and pymongo library.
 
 
 Simply run pip install to install requirement packages and then __python *run.py*__.
