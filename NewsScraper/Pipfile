@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+bs4 = "~=0.0.1"
+requests = "~=2.24.0"
+schedule = "~=0.6.0"
+lxml = "~=4.5.0"
+html5lib = "~=1.0.1"
+json5 = "~=0.9.1"
+python-newsapi = "*"
+newsapi-python = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"

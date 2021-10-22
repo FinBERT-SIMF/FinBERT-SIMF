@@ -1,0 +1,30 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+flask-pymongo = "*"
+webargs = "*"
+pymongo = "*"
+flask-apispec = "*"
+apispec = "*"
+flask-restful-swagger = "*"
+flask-restplus = "*"
+fields = "*"
+python-dotenv = "*"
+flask-cors = "*"
+pandas = "*"
+pyecharts = "*"
+plotly = "*"
+requests = "*"
+pandas-datareader = "*"
+dash = "*"
+dash-core-components = "*"
+dash-html-components = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
