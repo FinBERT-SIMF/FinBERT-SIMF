@@ -15,12 +15,15 @@ major currency pairs such as *EUR/USD*, *USD/JPY*, GBP/USD and for Cryptocurrenc
 
 ![EURUSD Prediction Plot](https://github.com/FinBERT-SIMF/FinBERT-SIMF/blob/ab8bd8af8429627dae83cb86ee643f4d8baf59d9/EURUSD_prediction.png)
 <div align="center"><span style="color:blue">FinBERT-SIMF prediction plot of EURUSD during 6 month of test set.</span></div> 
+<hr style="border:2px solid gray"> </hr>
 
 ![USDJPY Prediction Plot](https://github.com/FinBERT-SIMF/FinBERT-SIMF/blob/ab8bd8af8429627dae83cb86ee643f4d8baf59d9/USDJPY_prediction.png)
 <div align="center"><span style="color:blue">FinBERT-SIMF prediction plot of USDJPY during 6 month of test set.</span></div>
+<hr style="border:2px solid gray"> </hr>
 
 ![GBPUSD Prediction Plot](https://github.com/FinBERT-SIMF/FinBERT-SIMF/blob/ab8bd8af8429627dae83cb86ee643f4d8baf59d9/GBPUSD_prediction.png)
 <div align="center"> <span style="color:blue">Prediction plot with FinBERT-SIMF for GBPUSD during 6 month of test set.</span></div>
+<hr style="border:2px solid gray"> </hr>
 
 ###### We also analysis the amount of information gain of features and present the results in following table.
 
