@@ -13,19 +13,19 @@ major currency pairs such as *EUR/USD*, *USD/JPY*, GBP/USD and for Cryptocurrenc
 
 ###### Following figure shows the prediction plot of our model for major currency pairs in the FOREX market.
 
-![EURUSD Prediction Plot](EURUSD prediction.png)
-<div align="center"> FinBERT-SIMF prediction plot of EURUSD during 6 month of test set.</div> 
+![EURUSD Prediction Plot](https://github.com/FinBERT-SIMF/FinBERT-SIMF/blob/ab8bd8af8429627dae83cb86ee643f4d8baf59d9/EURUSD_prediction.png)
+<div align="center"><span style="color:blue">*FinBERT-SIMF prediction plot of EURUSD during 6 month of test set.*</span></div> 
 
-![USDJPY Prediction Plot](USDJPY prediction.png)
-<div align="center">FinBERT-SIMF prediction plot of USDJPY during 6 month of test set.</div>
+![USDJPY Prediction Plot](https://github.com/FinBERT-SIMF/FinBERT-SIMF/blob/ab8bd8af8429627dae83cb86ee643f4d8baf59d9/USDJPY_prediction.png)
+<div align="center"><span style="color:blue">*FinBERT-SIMF prediction plot of USDJPY during 6 month of test set.*</span></div>
 
-![GBPUSD Prediction Plot](GBPUSD prediction.png)
-<div align="center"> Prediction plot with FinBERT-SIMF for GBPUSD during 6 month of test set.</div>
+![GBPUSD Prediction Plot](https://github.com/FinBERT-SIMF/FinBERT-SIMF/blob/ab8bd8af8429627dae83cb86ee643f4d8baf59d9/GBPUSD_prediction.png)
+<div align="center"> <span style="color:blue">*Prediction plot with FinBERT-SIMF for GBPUSD during 6 month of test set.*</span></div>
 
 ###### We also analysis the amount of information gain of features and present the results in following table.
 
-![](L2 norm.png)
-<div align="center"> Information gain and norm 2 of LSTM layer weights corresponding to each market and mood based features. Cells with * mark, negatively correlated with target close price of the corresponding market.</div>
+![Informaion gain and LSTM weights](https://github.com/FinBERT-SIMF/FinBERT-SIMF/blob/ab8bd8af8429627dae83cb86ee643f4d8baf59d9/L2_norm.png)
+Information gain and L<sup>2</sup> norm of LSTM layer weights corresponding to each market and mood based features. Cells with * mark, negatively correlated with target close price of the corresponding market.
 
 We implemented FinBERT-SIMF on top of MarketPredict tool available [here](https://github.com/MarketPredict-BoEC/MarketPredict-RESTFul-API). We preserve the architecture of MarketPredict and only implement our predictive model on top of it. 
 
