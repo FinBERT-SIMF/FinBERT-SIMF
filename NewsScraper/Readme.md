@@ -32,7 +32,7 @@ After scraping, we statndard all scraped news based on following attributes. All
 |   provider      | Newsgroup    | FXStreet, newsBTC, Reuters, Cointelegraph, Investing, Bloomberg|
 |   summary      | news summary     | A breif summary about news|Yes|
 |   link      | News link     |https://www.fxstreet.com/news/eur-usd-turkey-risks-could-trigger-overdue-correction-lower-for-the-euro-mufg-202008071657 |No|
-|   Sentiment Score      |  DistilBERT Sentiment Score    | [-1,1] |No
+|   Sentiment Score      |  FinBERT Sentiment Score    | [0,1] |No
 |   Sentiment |  Sentiment class    | Positive/Negative/Neutral |Yes. 
 |   thImage      | URL of news thumbnail image     | URL of news thumbnail image | Yes
 |    images | URLs of images in news body    |  Array of URLs of news images  |No
