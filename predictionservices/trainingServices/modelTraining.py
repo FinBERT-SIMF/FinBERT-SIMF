@@ -36,8 +36,8 @@ def train_model(category, pair, newsKeywords,
         # trade data RNN
         input_shape = (train_x.shape[1:])
         input = Input(shape=input_shape)
-        x2 = LSTM(128, name="MarketRNN1", return_state=False)(input)
-        x2 = LSTM(128,name="MarketRNN2") (input)
+        x2 = LSTM(128, name="MarketRNN1", return_sequences=True)(input)
+        x2 = LSTM(128,name="MarketRNN2") (x2)
         x2 = Dropout(0.2)(x2)
         x2 = Dense(1)(x2)
         marketModel = Model(input, x2)
