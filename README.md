@@ -25,11 +25,6 @@ major currency pairs such as *EUR/USD*, *USD/JPY*, GBP/USD and for Cryptocurrenc
 <div align="center"> <span style="color:blue">Prediction plot with FinBERT-SIMF for GBPUSD during 6 month of test set.</span></div>
 <hr style="border:2px solid gray"> </hr>
 
-###### We also analysis the amount of information gain of features and present the results in following table.
-
-![Informaion gain and LSTM weights](https://github.com/FinBERT-SIMF/FinBERT-SIMF/blob/ab8bd8af8429627dae83cb86ee643f4d8baf59d9/L2_norm.png)
-
-Information gain and L<sup>2</sup> norm of LSTM layer weights corresponding to each market and mood based features. Cells with * mark, negatively correlated with target close price of the corresponding market.
 
 We implemented FinBERT-SIMF on top of MarketPredict tool available [here](https://github.com/MarketPredict-BoEC/MarketPredict-RESTFul-API). We preserve the architecture of MarketPredict and only implement our predictive model on top of it. 
 
