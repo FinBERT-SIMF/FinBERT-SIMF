@@ -32,5 +32,23 @@ Please visit following services :
 - news scraper services in newsscraper folder
 - Model training Services in trainingServices folder
 - Prediction Services in predictionServices folder
+
+
+Please cite our [paper](https://www.sciencedirect.com/science/article/abs/pii/S095070512200346X) that published in [Knowledge Based SYstems](https://www.sciencedirect.com/journal/knowledge-based-systems) journal as follow:
+
+S. A. Farimani, M. V. Jahan, A. M. Fard and S.R Kamel, "Investigating the informativeness of technical indicators and news sentiment in financial market price prediction", Knowledge-Based Systems,2022, 108742, ISSN 0950-7051, https://doi.org/10.1016/j.knosys.2022.108742.
+
+@article{ANBAEEFARIMANI2022108742,
+         title = {Investigating the informativeness of technical indicators and news sentiment in financial market price prediction},
+         journal = {Knowledge-Based Systems},
+         pages = {108742},
+         year = {2022},
+         issn = {0950-7051},
+         doi = {https://doi.org/10.1016/j.knosys.2022.108742},
+         url = {https://www.sciencedirect.com/science/article/pii/S095070512200346X},
+         author = {Saeede {Anbaee Farimani} and Majid {Vafaei Jahan} and Amin {Milani Fard} and Seyed Reza Kamel Tabbakh},
+         keywords = {Market prediction, Transformer-based language models, Financial sentiment analysis, Information gain, FinBERT},
+         abstract = {Real-time market prediction tool tracking public opinion in specialized newsgroups and informative market data persuades investors of financial markets. Previous works mainly used lexicon-based sentiment analysis for financial markets prediction, while recently proposed transformer-based sentiment analysis promise good results for cross-domain sentiment analysis. This work considers temporal relationships between consecutive snapshots of informative market data and mood time series for market price prediction. We calculate the sentiment mood time series via the probability distribution of news embedding generated through a BERT-based transformer language model fine-tuned for financial domain sentiment analysis. We then use a deep recurrent neural network for feature extraction followed by a dense layer for price regression. We implemented our approach as an open-source API for real-time price regression. We build a corpus of financial news related to currency pairs in foreign exchange and Cryptocurrency markets. We further augment our model with informative technical indicators and news sentiment scores aligned based on news release timestamp. Results of our experiments show significant error reduction compared to the baselines. Our Financial News and Financial Sentiment Analysis RESTFul APIs are available for public use.}
+}
  
 
