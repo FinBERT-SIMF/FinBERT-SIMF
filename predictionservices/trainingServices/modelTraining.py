@@ -1,84 +1,107 @@
-from datetime import datetime
-from predictionservices.dataProvidingServices.dataProviding import prepairDataForLoad
-import tensorflow as tf
-import numpy as np
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import concatenate
-from tensorflow.keras.layers import Dense, Input, Dropout, LSTM, Conv1D, MaxPooling1D
-from tensorflow.keras.regularizers import l2
-from matplotlib import pyplot as plt
-import predictionservices. errors
+import logging
 import pathlib
+from datetime import datetime
+
+import numpy as np
+import predictionservices.errors
+from matplotlib import pyplot as plt
+from predictionservices.dataProvidingServices.dataProviding import load_training_data
 from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import Dense, Input, Dropout, LSTM
 from tensorflow.keras.losses import MeanAbsolutePercentageError
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
 
 Training = True
 
-def train_model(category, pair, newsKeywords,
+
+def create_model(input_shape: int) -> Model:
+    lstm_shape = 128
+    dropout = 0.2
+
+    _input = Input(shape=input_shape)
+    x2 = LSTM(lstm_shape, name="MarketRNN1", return_sequences=True)(_input)
+    x2 = LSTM(lstm_shape, name="MarketRNN2")(x2)
+    x2 = Dropout(dropout)(x2)
+    x2 = Dense(1)(x2)
+
+    return Model(input, x2)
+
+
+def train_model(category, pair, news_keywords,
                 provider=['fxstreet'],
                 resolution=60,
-                SEQ_LEN=7 , epoch=60, learningRate=0.001, decay=1e-6, batch_size=32):
+                sequence_length=7, epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32, validation_split=0.2):
     try:
-        print('-------------Start Model Training for currency pair {a} with news keywords {b}--------------------------'.format(a = pair,b=newsKeywords))
-        endDate =int( datetime.utcnow().timestamp())
-        threeYearsTS = 94867200
-        twoYearsTS = 63072000
-        startDate = endDate - twoYearsTS
-        train_x, train_y, dates = prepairDataForLoad(category,
-                                                                   pair, startDate, endDate,
-                                                                   newsKeywords, provider=provider,
-                                                                    resolution=resolution,
-                                                                   SEQ_LEN=SEQ_LEN,
-                                                                    Training=True)
+        logging.info(
+            '-------------Start Model Training for currency pair {pair} with news keywords {newsKeywords}--------------------------'
+        )
+        end_date = int(datetime.utcnow().timestamp())
+        three_years_ts = 94867200
+        two_years_ts = 63072000
+        start_date = end_date - two_years_ts
+        X_train, y_train, dates = load_training_data(category,
+                                                     pair, start_date, end_date,
+                                                     news_keywords, provider=provider,
+                                                     resolution=resolution,
+                                                     SEQ_LEN=sequence_length,
+                                                     Training=True)
 
         # trade data RNN
-        input_shape = (train_x.shape[1:])
-        input = Input(shape=input_shape)
-        x2 = LSTM(128, name="MarketRNN1", return_sequences=True)(input)
-        x2 = LSTM(128,name="MarketRNN2") (x2)
-        x2 = Dropout(0.2)(x2)
-        x2 = Dense(1)(x2)
-        marketModel = Model(input, x2)
+        input_shape = (X_train.shape[1:])
 
-        opt = tf.keras.optimizers.Adam(lr=learningRate, decay=decay)
-        callback = EarlyStopping(monitor='val_loss', patience=30, min_delta=0.00001, )
+        # Model
+        market_model = create_model(input_shape)
 
-        marketModel.compile(
+        optimizer = Adam(lr=learning_rate, decay=decay)
+        callbacks = [
+            EarlyStopping(monitor='val_loss', patience=30, min_delta=0.00001),
+        ]
+
+        market_model.compile(
             loss=MeanAbsolutePercentageError(),
-            optimizer=opt)
-        marketModel.summary()
+            optimizer=optimizer)
+        market_model.summary()
 
-        history = marketModel.fit(
-            train_x, np.array(train_y),
+        history = market_model.fit(
+            X_train, np.array(y_train),
             batch_size=batch_size,
-            epochs=epoch,
-            validation_split=0.2,
-            callbacks=[callback])
+            epochs=epochs,
+            validation_split=validation_split,
+            callbacks=callbacks
+        )
 
-        marketModel.compile(
-            loss=tf.keras.losses.MeanAbsolutePercentageError(),
-            optimizer=opt
+        market_model.compile(
+            loss=MeanAbsolutePercentageError(),
+            optimizer=optimizer
 
         )
 
-        marketModel.summary()
+        market_model.summary()
 
+        logging.info("plotting loss...")
+        # plot loss
         plot_loss(history)
         plt.show()
+
+        logging.info("successfully plotted loss...")
+
+        # save model
         modelName = pair.upper() + 'WithNewsHourly.h5'
         current_Path = pathlib.Path().absolute()
-        filePath = str(current_Path)+'/outputFiles/' + category + '/' + pair + '/' + modelName
-        marketModel.save(filePath)
-        print('-------------successfully completed!--------------------------')
-    except predictionservices.errors.DataProvidingException as err:
-        print(err.message)
-        return False
-    except:
-        print("Something Went Wrong!")
-        return False
+        filePath = str(current_Path) + '/outputFiles/' + category + '/' + pair + '/' + modelName
 
+        logging.info(f"saving trained model to {filePath}")
+        market_model.save(filePath)
+
+        logging.info('-------------successfully completed!--------------------------')
+
+    except predictionservices.errors.DataProvidingException as err:
+        logging.error(err.message)
+        return False
+    except Exception:
+        logging.error("Something Went Wrong!")
+        return False
 
 
 def plot_loss(history):
@@ -92,12 +115,16 @@ def plot_loss(history):
 
 
 def main():
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
-    train_model(category='Forex', pair='USDJPY', newsKeywords='USDJPY',
-                provider=['fxstreet'],
-                resolution=60,  SEQ_LEN=7,
-                epoch=150,learningRate=0.001,decay=1e-6,batch_size=32)
-    return
+    train_model(
+        category='Forex',
+        pair='EURUSD',
+        news_keywords='EURUSD',
+        provider=['fxstreet'],
+        resolution=60,
+        sequence_length=7, epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32
+    )
 
 
 if __name__ == "__main__":

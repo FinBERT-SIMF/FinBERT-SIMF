@@ -19,20 +19,20 @@ def firstUsage():
     try:
 
         # ____________Model Training____________________ #
-        train_model(category='Forex', pair='USDJPY', newsKeywords='USDJPY',
-                    provider=['fxstreet'], SEQ_LEN=7,
-                    epoch=150, learningRate=0.001, decay=1e-6, batch_size=32)
+        train_model(category='Forex', pair='USDJPY', news_keywords='USDJPY',
+                    provider=['fxstreet'], sequence_length=7,
+                    epochs=150, learning_rate=0.001, decay=1e-6, batch_size=32)
 
-        train_model(category='Forex', pair='EURUSD', newsKeywords='EURUSD',
-                    provider=['fxstreet'], SEQ_LEN=7,
-                    epoch=150, learningRate=0.001, decay=1e-6, batch_size=32)
+        train_model(category='Forex', pair='EURUSD', news_keywords='EURUSD',
+                    provider=['fxstreet'], sequence_length=7,
+                    epochs=150, learning_rate=0.001, decay=1e-6, batch_size=32)
 
-        train_model(category='Forex', pair='GBPUSD', newsKeywords='GBPUSD',
-                    provider=['fxstreet'], SEQ_LEN=7, epoch=150, learningRate=0.001, decay=1e-6, batch_size=32)
+        train_model(category='Forex', pair='GBPUSD', news_keywords='GBPUSD',
+                    provider=['fxstreet'], sequence_length=7, epochs=150, learning_rate=0.001, decay=1e-6, batch_size=32)
 
-        train_model(category='Cryptocurrency', pair='BTCUSDT', newsKeywords='bitcoin',
-                    provider=['fxstreet'], SEQ_LEN=7,
-                    epoch=300, learningRate=0.5, decay=1e-3, batch_size=32)
+        train_model(category='Cryptocurrency', pair='BTCUSDT', news_keywords='bitcoin',
+                    provider=['fxstreet'], sequence_length=7,
+                    epochs=300, learning_rate=0.5, decay=1e-3, batch_size=32)
 
     except Exception as err:
         print(err)
@@ -95,36 +95,36 @@ def predictionServices():
 def trainingBussinessDay():
     try:
         train_model(category='Forex', pair='EURUSD',
-                    newsKeywords='EURUSD',
+                    news_keywords='EURUSD',
                     provider=['fxstreet'],
                     resolution=60,
-                    SEQ_LEN=7, epoch=60, learningRate=0.001, decay=1e-6, batch_size=32
+                    sequence_length=7, epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32
                     )
         train_model(category='Forex', pair='USDJPY',
-                    newsKeywords='USDJPY',
+                    news_keywords='USDJPY',
                     provider=['fxstreet'],
                     resolution=60,
-                    SEQ_LEN=7
-                    , epoch=60, learningRate=0.001, decay=1e-6, batch_size=32
+                    sequence_length=7
+                    , epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32
                     )
         train_model(category='Forex', pair='GBPUSD',
-                    newsKeywords='GBPUSD',
+                    news_keywords='GBPUSD',
                     provider=['fxstreet'], concept_number=210,
                     resolution=60,
-                    SEQ_LEN=7, epoch=60, learningRate=0.001, decay=1e-6, batch_size=32
+                    sequence_length=7, epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32
                     )
         train_model(category='Forex', pair='USDCHF',
-                    newsKeywords='USDCHF',
+                    news_keywords='USDCHF',
                     provider=['fxstreet'], concept_number=210,
                     resolution=60,
-                    SEQ_LEN=7
-                    , epoch=60, learningRate=0.001, decay=1e-6, batch_size=32
+                    sequence_length=7
+                    , epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32
                     )
         train_model(category='Forex', pair='XAUUSD',
-                    newsKeywords='gold',
+                    news_keywords='gold',
                     provider=['fxstreet'], concept_number=210,
                     resolution=60,
-                    SEQ_LEN=7, epoch=60, learningRate=0.001, decay=1e-6, batch_size=32
+                    sequence_length=7, epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32
                     )
 
     except Exception as err:
@@ -135,11 +135,11 @@ def trainingBussinessDay():
 def trainingFullTimeMarkets():
     try:
         train_model(category='CryptoCurrency', pair='BTCUSDT',
-                    newsKeywords='bitcoin',
+                    news_keywords='bitcoin',
                     provider=['fxstreet'], concept_number=210,
                     resolution=60, SEQ_LEN_news=7,
-                    SEQ_LEN=7, max_L=15, conceptsType='pair'
-                    , epoch=60, learningRate=0.001, decay=1e-6, batch_size=32
+                    sequence_length=7, max_L=15, conceptsType='pair'
+                    , epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32
                     )
     except Exception as err:
         print(str(err))
