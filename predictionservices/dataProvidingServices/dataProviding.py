@@ -21,6 +21,7 @@ from sklearn import preprocessing
 
 import errors
 from definitions import ROOT_DIR
+
 '''
 max_L = 15
 SEQ_LEN = 7
@@ -31,8 +32,6 @@ SEQ_LEN_news = 7
 
 '''
 
-FUTURE_PERIOD_PREDICT = 1
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
 def prepare_long_candle_data(category, pair, start_date, end_date, resolution=60) -> pd.DataFrame:
     """Fetch data from finnhub.io api and return it as a pandas DataFrame. Fetch 2 months worth of data
@@ -298,19 +297,20 @@ def load_market_data(category, pair, start_date, end_date, Long,
     market_df = pd.read_excel(path_to_technical_indicators)
 
     # fetch start and end dates
-    start_date, end_date = market_df['Date'][0], market_df['Date'][len(market_df)-1]
+    start_date, end_date = market_df['Date'][0], market_df['Date'][len(market_df) - 1]
 
     logging.debug(f"Finished loading market data, it is of length {len(market_df)=}")
 
     return market_df, start_date, end_date
 
+
 def load_news(category, news_keywords,
               start_date, end_date, Long) -> pd.DataFrame:
-    path_to_news = os.path.join(ROOT_DIR, "data", "totalEURUSDnews.xlsx")
+    path_to_news = os.path.join(ROOT_DIR, "data", "mood.csv")
 
     logging.debug(f"Preparing to load news data from {path_to_news=}")
 
-    news_df = pd.read_excel(path_to_news)
+    news_df = pd.read_csv(path_to_news, sep='\t')
 
     logging.debug(f"Finished loading news data. number of rows {len(news_df)=}")
 
@@ -339,8 +339,8 @@ def load_raw_data(category, pair, start_date, end_date, news_keywords,
                              Long=Long)
 
         logging.debug("Finished fetching news")
-
-        logging.info(f'Total news for training: {len(news_df)}')
+        logging.debug(f"Total news for training: {len(news_df)}")
+        logging.debug(f"Columns:\n{market_df.columns=}\n{news_df.columns=}")
 
         return market_df, news_df
 
@@ -349,6 +349,7 @@ def load_raw_data(category, pair, start_date, end_date, news_keywords,
 
 
 def rolling_window_normalization(market_df, sequence_length):
+    # TODO: check if we should do this
     sequential_data = []  # this is a list that will CONTAIN the sequences
     prev_days = deque(maxlen=sequence_length)
     for d, row in market_df.iterrows():
@@ -357,12 +358,45 @@ def rolling_window_normalization(market_df, sequence_length):
             return True
 
 
-def to_this_hour(date):
-    return date.replace(microsecond=0, second=0, minute=0)
+def coalesce_data(market_df: pd.DataFrame, news_df: pd.DataFrame) -> pd.DataFrame:
+    logging.debug("Coalescing market and news data")
+
+    sentiment_cols = ['neutral', 'positive', 'negative']
+
+    # make sure the dataframe's dates are the same format
+    if not issubclass(type(market_df.index.dtype), type(news_df.index.dtype)):
+        raise ValueError(f'Market data and news data must have the same datetime type: {market_df.index.dtype=} != {news_df.index.dtype=}')
+
+    # aggregate sentiment score *forward* every hour
+    forward_one_hour_grouper = pd.Grouper(freq='H', label='right')
+    # TODO: check if we should normalize it as well, either on column basis or on each summation
+    hourly_sentiment = (
+        news_df[sentiment_cols]
+        .groupby(forward_one_hour_grouper)
+        .sum()
+    )
+
+    # assume sentiment is unchanged if there are no new news: forward-fill
+    hourly_sentiment = hourly_sentiment.replace(0.0, np.nan).ffill()
+
+    # left join aggregated sentiment with market data. left join makes
+    combined_df = market_df.join(hourly_sentiment)
+
+    logging.debug(f"Filling rows with NaN sentiments with 0's: currently total number of NaNs\n{combined_df.isna().sum()}")
+    logging.debug(f"First sample:\n{combined_df.iloc[0, :]}")
+    logging.debug(f"Rows with NaN's: at timestamps\n{combined_df[combined_df.isna().sum(axis=1) > 0].index}")
+
+    combined_df.fillna(value=0.0, inplace=True)
+
+    logging.debug(f"After removing NaNs: total is now {combined_df.isna().sum().sum()}")
+
+    return combined_df
 
 
 def transform_news_data(news_df: pd.DataFrame) -> pd.DataFrame:
     # fix dates for news data to be compatible with dates for market data
+    logging.info("Transforming news data...")
+
     if not news_df.empty and 'pubDate' in news_df:
         news_df['Date'] = [datetime.strptime(datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
                                              , '%Y-%m-%d %H:%M:%S') for ts in news_df['pubDate']]
@@ -374,26 +408,53 @@ def transform_news_data(news_df: pd.DataFrame) -> pd.DataFrame:
     news_df['Date'] = pd.to_datetime(news_df['Date'], utc=True)
 
     news_df = news_df.set_index('Date')
+
+    logging.info(f"Finished transforming news data, {news_df.columns=}")
+
     return news_df
+
+
+def normalize_market_data(market_df: pd.DataFrame) -> pd.DataFrame:
+    logging.debug(f"Normalizing non-target columns")
+    assert 'target' in market_df
+
+    for col in market_df.columns.drop('target'):  # go through all features
+        market_df[col] = market_df[col].astype(float)
+        market_df = market_df.replace([np.inf, -np.inf], None)
+        market_df[col] = preprocessing.scale(market_df[col].values)  # scale between 0 and 1.
+
+    return market_df
+
+
+def create_target(market_df: pd.DataFrame) -> pd.DataFrame:
+    FUTURE_PERIOD_PREDICT = 1
+
+    if 'Close' in market_df:
+        # this is the closing price the coming hour
+        market_df['target'] = market_df['Close'].shift(-FUTURE_PERIOD_PREDICT)
+        return market_df
+
+    raise AttributeError(f"'Close' not in columns of market dataframe: {market_df.columns}")
 
 
 def choose_features(market_df: pd.DataFrame) -> pd.DataFrame:
     # TODO: check what features they are using, might have been only 12
     return (market_df
-        .drop("Open", 1)
-        .drop("Low", 1)
-        .drop("High", 1)
-    )
+            .drop("Open", axis=1)
+            .drop("Low", axis=1)
+            .drop("High", axis=1)
+            )
 
 
 def transform_market_data(market_df, Long, sequence_length):
+    """Transform and compute technical indicators for market data"""
+
     logging.debug("Transforming market data")
     logging.debug("Dropping columns Open, Low, and High")
 
     market_df['Date'] = pd.to_datetime(market_df['Date'], utc=True)
     market_df = market_df.set_index('Date')
 
-    # transform and compute technical indicators for market data
     if 'timestamp' in market_df.columns:
         market_df = market_df.drop('timestamp', 1)
 
@@ -403,91 +464,79 @@ def transform_market_data(market_df, Long, sequence_length):
     # don't need these columns anymore.
     market_df = choose_features(market_df)
 
-    # create target column
-    market_df['target'] = market_df['Close'].shift(-FUTURE_PERIOD_PREDICT)
+    # create target column. we predict closing prices one hour ahead
+    market_df = create_target(market_df)
 
-    logging.debug(f"Normalizing non-target columns")
-    for col in market_df.columns.drop('target'):  # go through all features
-        market_df[col] = market_df[col].astype(float)
-        market_df = market_df.replace([np.inf, -np.inf], None)
-        market_df[col] = preprocessing.scale(market_df[col].values)  # scale between 0 and 1.
+    market_df = normalize_market_data(market_df)
 
-    logging.debug("Dropping NaN rows")
-    market_df.dropna(inplace=True)  # cleanup again... jic.
+    # drop the last row since it does not have a target
+    logging.debug("Dropping final row because it is missing target")
+    market_df.drop(market_df.index[-1], inplace=True)
+
+    # Drop NaN rows
+    logging.debug(f"Dropping NaN rows (total {market_df.isna().sum().sum()})- total NaN's per column: {market_df.isna().sum()}")
+    market_df = market_df.dropna()  # cleanup again... jic.
 
     logging.debug(f"Finished transforming market data\n{market_df.columns=}\n{len(market_df.columns)=}")
 
     return market_df
 
 
-def transform_and_align(market_df, news_df, category, pair, Long=False, max_L=15, sequence_length=7):
-    try:
-        logging.debug("Preparing to align and transform data")
+def transform_and_align(market_df, news_df, Long=False, sequence_length=7) -> Tuple[np.array, np.array, np.array]:
+    logging.debug("Preparing to align and transform data")
 
-        if market_df.empty or news_df.empty:
-            raise ValueError(f"market_df or news_df is None: {market_df=}, {news_df=}")
+    if market_df.empty or news_df.empty:
+        raise ValueError(f"market_df or news_df is None: {market_df=}, {news_df=}")
 
-        logging.debug(f"{market_df.columns=}")
+    market_df = transform_market_data(market_df, Long, sequence_length)
+    news_df = transform_news_data(news_df)
 
-        market_df = transform_market_data(market_df, Long, sequence_length)
-        news_df = transform_news_data(news_df)
+    combined_df = coalesce_data(market_df, news_df)
 
-        for w in news_df.index:
-            if w in market_df.index:
-                # TODO: here we assume sentiment is in is in news_df. Make sure this holds true
-                # TODO: make sure the timestamp formats are compatible between the dataframes
-                # TODO: make sure that we *add* scores if we have more than one news article on the same timestamp (hour)
-                # add news sentiment per timestamp to the market df
-                market_df.loc[w, 'posScore'] = news_df.loc[w, 'Positive']
-                market_df.loc[w, 'negScore'] = news_df.loc[w, 'Negative']
-                market_df.loc[w, 'neutralScore'] = news_df.loc[w, 'neutral']
+    logging.debug(f"First sample in combined:\n{combined_df.iloc[0, :]}")
 
-            else:
-                # If news is published on a non-business day, find the next hour and add this
-                # value to the next hour sentiment score
-                i = market_df.index.get_loc(w, method='bfill')
-                market_df.iloc[i]['posScore'] += news_df.loc[w, 'Positive']
-                market_df.iloc[i]['negScore'] += news_df.loc[w, 'Negative']
-                market_df.iloc[i]['neutralScore'] += news_df.loc[w, 'neutral']
+    # construct samples of sequences of length sequence_length back in time
+    # put them into canonical dataframes X (features with datetime), and y labels, and dates
 
-        # construct sequences of samples, each of length sequence_length
-        # TODO: confirm we are not missing samples here: we can make the moverlap by sequence_length-1 but here
-        # it seems like we have no overlap at all and thus missing a lot of samples.
+    # if the maxlen is reached, an append will also be followed by a pop in the beginning
+    # this preserves sequence length
+    previous_days = deque(maxlen=sequence_length)
 
-        # list of samples
-        sequential_data = []
+    X, y, dates = [], [], []
+    for index, (date, features) in enumerate(combined_df.iterrows()):
+        # extract features as numpy vectors
+        features_np = (
+            features
+            .drop('target')
+            .to_numpy()
+        )
+        # appending will keep only the sequence_length previous days' features
+        previous_days.append(features_np)
 
-        # if the maxlen is reached an append will also be followed by a pop in the beginning
-        prev_days = deque(maxlen=sequence_length)
+        if index < 2:
+            logging.debug(f"First sample added to list of samples:\n{previous_days}")
 
-        for index, (d, row) in enumerate(market_df.iterrows()):
-            # store all but the target
-            prev_days.append([n for n in row[:-1]])
+        # make sure we have sequences of length sequence_length
+        if len(previous_days) < sequence_length:
+            continue
 
-            if index < sequence_length - 1:  # make sure we have sequences of length sequence_length
-                # TODO: check why the close price of one hour is not the same as the opening price the next hour.
-                # i.e. what are we actually trying to precict? Now we are predicting the closing price in 7 hours, right?
+        # add samples to our canonical datasets
+        X.append(np.array(previous_days))
 
-                sequential_data.append([np.array(prev_days), row[-1], d])
+        if len(X) == 1:
+            logging.debug(f"adding first sample to X: {(previous_days == X[0])=}")
 
-        # TODO: do this step right away instead of using sequential_data
-        X = []
-        y = []
-        da = []
-        for seq, target, d in sequential_data:  # going over our new sequential data
-            X.append(seq)  # X is the sequences
-            y.append(target)  # y is the targets/labels (buys vs sell/notbuy)
-            da.append(d)
+        y.append(features['target'])
+        dates.append(date)
 
-        return np.array(X), np.array(y), da
+    logging.debug(f"{X[0]=}")
 
-    except errors.DataProvidingException as er:
-        raise errors.DataProvidingException(message=er.message)
+    return np.array(X), np.array(y), np.array(dates)
 
 
 def load_training_data(category, pair, start_date, end_date,
                        news_keywords, resolution=60, sequence_length=7,
-                       training=False, query=True):
+                       training=False, query=False):
     try:
         logging.info(f"{query=}")
 
@@ -498,8 +547,7 @@ def load_training_data(category, pair, start_date, end_date,
                                            sequence_length=sequence_length,
                                            Long=training, query=query)
 
-        X_train, y_train, dates = transform_and_align(market_df, news_df,
-                                                      category, pair, Long=training,
+        X_train, y_train, dates = transform_and_align(market_df, news_df, Long=training,
                                                       sequence_length=sequence_length)
 
         return X_train, y_train, dates
@@ -515,6 +563,7 @@ def main():
 
     load_training_data(category='Forex', pair='EURUSD', news_keywords='EURUSD',
                        start_date=int(e), end_date=int(s), training=True, query=False)
+
 
 if __name__ == "__main__":
     main()

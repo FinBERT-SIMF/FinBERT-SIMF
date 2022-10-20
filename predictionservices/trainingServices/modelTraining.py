@@ -3,9 +3,9 @@ import pathlib
 from datetime import datetime
 
 import numpy as np
-import predictionservices.errors
+import errors
 from matplotlib import pyplot as plt
-from predictionservices.dataProvidingServices.dataProviding import load_training_data
+from dataProvidingServices.dataProviding import load_training_data
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Dense, Input, Dropout, LSTM
 from tensorflow.keras.losses import MeanAbsolutePercentageError
@@ -31,77 +31,69 @@ def create_model(input_shape: int) -> Model:
 def train_model(category, pair, news_keywords,
                 provider=['fxstreet'],
                 resolution=60,
-                sequence_length=7, epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32, validation_split=0.2):
-    try:
-        logging.info(
-            '-------------Start Model Training for currency pair {pair} with news keywords {newsKeywords}--------------------------'
-        )
-        end_date = int(datetime.utcnow().timestamp())
-        three_years_ts = 94867200
-        two_years_ts = 63072000
-        start_date = end_date - two_years_ts
-        X_train, y_train, dates = load_training_data(category,
-                                                     pair, start_date, end_date,
-                                                     news_keywords, provider=provider,
-                                                     resolution=resolution,
-                                                     SEQ_LEN=sequence_length,
-                                                     Training=True)
+                sequence_length=7, epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32, validation_split=0.2, training=False):
+    logging.info(
+        f'-------------Start Model Training for currency pair {pair} with news keywords {news_keywords}--------------------------'
+    )
+    end_date = int(datetime.utcnow().timestamp())
+    three_years_ts = 94867200
+    two_years_ts = 63072000
+    start_date = end_date - two_years_ts
+    X_train, y_train, dates = load_training_data(category,
+                                                 pair, start_date, end_date,
+                                                 news_keywords,
+                                                 resolution=resolution,
+                                                 sequence_length=sequence_length,
+                                                 training=training)
 
-        # trade data RNN
-        input_shape = (X_train.shape[1:])
+    # trade data RNN
+    input_shape = (X_train.shape[1:])
 
-        # Model
-        market_model = create_model(input_shape)
+    # Model
+    market_model = create_model(input_shape)
 
-        optimizer = Adam(lr=learning_rate, decay=decay)
-        callbacks = [
-            EarlyStopping(monitor='val_loss', patience=30, min_delta=0.00001),
-        ]
+    optimizer = Adam(lr=learning_rate, decay=decay)
+    callbacks = [
+        EarlyStopping(monitor='val_loss', patience=30, min_delta=0.00001),
+    ]
 
-        market_model.compile(
-            loss=MeanAbsolutePercentageError(),
-            optimizer=optimizer)
-        market_model.summary()
+    market_model.compile(
+        loss=MeanAbsolutePercentageError(),
+        optimizer=optimizer)
+    market_model.summary()
 
-        history = market_model.fit(
-            X_train, np.array(y_train),
-            batch_size=batch_size,
-            epochs=epochs,
-            validation_split=validation_split,
-            callbacks=callbacks
-        )
+    history = market_model.fit(
+        X_train, np.array(y_train),
+        batch_size=batch_size,
+        epochs=epochs,
+        validation_split=validation_split,
+        callbacks=callbacks
+    )
 
-        market_model.compile(
-            loss=MeanAbsolutePercentageError(),
-            optimizer=optimizer
+    market_model.compile(
+        loss=MeanAbsolutePercentageError(),
+        optimizer=optimizer
 
-        )
+    )
 
-        market_model.summary()
+    market_model.summary()
 
-        logging.info("plotting loss...")
-        # plot loss
-        plot_loss(history)
-        plt.show()
+    logging.info("plotting loss...")
+    # plot loss
+    plot_loss(history)
+    plt.show()
 
-        logging.info("successfully plotted loss...")
+    logging.info("successfully plotted loss...")
 
-        # save model
-        modelName = pair.upper() + 'WithNewsHourly.h5'
-        current_Path = pathlib.Path().absolute()
-        filePath = str(current_Path) + '/outputFiles/' + category + '/' + pair + '/' + modelName
+    # save model
+    modelName = pair.upper() + 'WithNewsHourly.h5'
+    current_Path = pathlib.Path().absolute()
+    filePath = str(current_Path) + '/outputFiles/' + category + '/' + pair + '/' + modelName
 
-        logging.info(f"saving trained model to {filePath}")
-        market_model.save(filePath)
+    logging.info(f"saving trained model to {filePath}")
+    market_model.save(filePath)
 
-        logging.info('-------------successfully completed!--------------------------')
-
-    except predictionservices.errors.DataProvidingException as err:
-        logging.error(err.message)
-        return False
-    except Exception:
-        logging.error("Something Went Wrong!")
-        return False
+    logging.info('-------------successfully completed!--------------------------')
 
 
 def plot_loss(history):
@@ -123,7 +115,7 @@ def main():
         news_keywords='EURUSD',
         provider=['fxstreet'],
         resolution=60,
-        sequence_length=7, epochs=60, learning_rate=0.001, decay=1e-6, batch_size=32
+        sequence_length=7, epochs=1, learning_rate=0.001, decay=1e-6, batch_size=32
     )
 
 

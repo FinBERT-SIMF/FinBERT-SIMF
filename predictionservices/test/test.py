@@ -2,14 +2,14 @@ from datetime import datetime
 from dateutil.tz import tzutc
 import logging
 
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+
 from dataProvidingServices.dataProviding import (
     load_training_data,
     load_market_data,
     load_news,
     transform_market_data
 )
-
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
 
 
 def test_transform_market_data(category, pair, start_date, end_date, training,
@@ -34,6 +34,7 @@ def test_load_news(category, news_keywords, start_date, end_date, training):
                      start_date=start_date, end_date=end_date, Long=training)
 
     print(news)
+    assert len(news.columns) == 6
 
 
 def test_load_training_data_eurusd(category, pair, news_keywords,
@@ -43,9 +44,17 @@ def test_load_training_data_eurusd(category, pair, news_keywords,
     # s = datetime.utcnow().timestamp()
     # three_years_ts = 94867200
     # e = s - three_years_ts
-    load_training_data(category, pair, start_date, end_date,
-                       news_keywords, resolution=resolution, sequence_length=sequence_length,
-                       training=training, query=query)
+    X, y, dates = load_training_data(category, pair, start_date, end_date,
+                                     news_keywords, resolution=resolution, sequence_length=sequence_length,
+                                     training=training, query=query)
+
+    print(X[0])
+    print(y[0])
+    print(dates[0])
+
+    print(f"{len(X)=}")
+    print(f"{len(y)=}")
+    print(f"{len(dates)=}")
 
 
 def main() -> None:
@@ -60,13 +69,13 @@ def main() -> None:
     resolution = 60
 
     # test_load_market_data(category, news_keywords, start_date, end_date, training, resolution, sequence_length)
-    # test_load_training_data_eurusd(category=category, pair=pair, news_keywords=news_keywords,
-    #                                start_date=start_date, end_date=end_date,
-    #                                resolution=resolution, sequence_length=sequence_length,
-    #                                training=training, query=query)
-    test_transform_market_data(category, pair, start_date, end_date, training, resolution, sequence_length)
+    test_load_training_data_eurusd(category=category, pair=pair, news_keywords=news_keywords,
+                                   start_date=start_date, end_date=end_date,
+                                   resolution=resolution, sequence_length=sequence_length,
+                                   training=training, query=query)
+    # test_transform_market_data(category, pair, start_date, end_date, training, resolution, sequence_length)
     # test_load_news(category=category, news_keywords=news_keywords,
-    #                start_date=start_date, end_date=end_date, Long=training)
+    #                start_date=start_date, end_date=end_date, training=training)
 
 
 if __name__ == "__main__":
